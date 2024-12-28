@@ -27,6 +27,9 @@ public class ManagerScript : MonoBehaviour
     public List<Vector3> drawPositions = new List<Vector3>();
     public TextMeshProUGUI LevelCompleteText;
     public TextMeshProUGUI currentLevelText;
+
+    // Store original colors to revert them later
+    private Dictionary<GameObject, Color> originalColors = new Dictionary<GameObject, Color>();
     
     //Daynamic testing variables
     public LevelDataScriptable levelDataScriptable;
@@ -132,6 +135,13 @@ public class ManagerScript : MonoBehaviour
     //Gets the letters that are swiped over by players and generates lines connecting each letter.    
     private void GetPlayerInput()
     {
+        //Assigning Letter highlight color.
+        Color highlightColor;
+        if (!ColorUtility.TryParseHtmlString("#FFDD62", out highlightColor))
+        {
+            Debug.LogError("Invalid color code!");
+        }
+            
         if (Input.GetMouseButtonDown(0))
         {   
             //If players starts inputing another answer before the previous answer is still being
@@ -156,6 +166,10 @@ public class ManagerScript : MonoBehaviour
 
                 isDrawing = true;
                 connectedObjects.Add(targetObject);
+
+                //Change the targetObjects Color
+                ChangeSpriteColor(targetObject, highlightColor);
+
                 line.gameObject.SetActive(true);
                 DrawLine();
             }
@@ -174,6 +188,10 @@ public class ManagerScript : MonoBehaviour
                 if (!connectedObjects.Contains(targetObject))
                 {
                     connectedObjects.Add(targetObject);
+
+                    //Change the targetObjects Color
+                    ChangeSpriteColor(targetObject, highlightColor);
+
                     wordAttempt += targetLetter.GetComponent<TextMeshPro>().text;
                     currentLetterList.Add(targetLetter.GetComponent<TextMeshPro>().text);
                 }
@@ -185,9 +203,15 @@ public class ManagerScript : MonoBehaviour
         if (Input.GetMouseButtonUp(0) && isDrawing)
         {
             isDrawing = false;
+
+            //After player lets go of mouse button revert the colors of the target objects
+            foreach (GameObject targetObject in connectedObjects)
+            {
+                RevertSpriteColor(targetObject);
+            }   
+
             connectedObjects.Clear();
             DeActivateDrawing();
-
             CheckPlayerInput();
         }
     }
@@ -401,6 +425,42 @@ public class ManagerScript : MonoBehaviour
             }
 
             return wheel;
+    }
+
+    // Change the color of letter cicrle's SpriteRenderer
+    private void ChangeSpriteColor(GameObject targetObject, Color newColor)
+    {
+        SpriteRenderer spriteRenderer = targetObject.GetComponent<SpriteRenderer>();
+
+        if (spriteRenderer != null)
+        {
+            // Store the original color if not already stored
+            if (!originalColors.ContainsKey(targetObject))
+            {
+                originalColors[targetObject] = spriteRenderer.color;
+            }
+
+            // Change the color
+            spriteRenderer.color = newColor;
+        }
+    }
+
+    // Revert the letter circle's SpriteRenderer's color to its original
+    private void RevertSpriteColor(GameObject targetObject)
+    {
+        if (originalColors.ContainsKey(targetObject))
+        {
+            SpriteRenderer spriteRenderer = targetObject.GetComponent<SpriteRenderer>();
+
+            if (spriteRenderer != null)
+            {
+                // Revert the color
+                spriteRenderer.color = originalColors[targetObject];
+            }
+
+            // Remove from the dictionary to free memory
+            originalColors.Remove(targetObject);
+        }
     }
 }
 
