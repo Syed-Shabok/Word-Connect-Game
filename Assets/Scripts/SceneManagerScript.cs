@@ -4,50 +4,61 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class SceneManagerScript : MonoBehaviour
-{
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+{   
+    [SerializeField] private AudioClip clickSound;
+    [SerializeField] private AudioSource audioSource;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
-    public void WordConnectPlayButton()
-    {
-        SceneManager.LoadScene(2);
-    }
-
+    
     public void WordConnectMenuButton()
     {
-        SceneManager.LoadScene(1);
+        audioSource.clip = clickSound;
+        audioSource.Play();
+
+        StartCoroutine(LoadSceneAfterSound(1, clickSound.length));
+    }
+    
+    public void WordConnectPlayButton()
+    {
+        audioSource.clip = clickSound;
+        audioSource.Play();
+
+        StartCoroutine(LoadSceneAfterSound(2, clickSound.length));
     }
 
-    public void WordConnect()
+    private IEnumerator LoadSceneAfterSound(int sceneNumber, float delay)
     {
-        SceneManager.LoadScene(1);
+        yield return new WaitForSeconds(delay);
+        SceneManager.LoadScene(sceneNumber);
     }
 
     public void LobbyButton()
     {
-        SceneManager.LoadScene(0);
+        audioSource.clip = clickSound;
+        audioSource.Play();
+
+        StartCoroutine(LoadSceneAfterSound(0, clickSound.length));
     }
 
     public void WordSearch()
     {
+        audioSource.clip = clickSound;
+        audioSource.Play();
+        
         Debug.Log("Word-Search game button was clicked.");
     }
     public void FourLetters()
     {
+        audioSource.clip = clickSound;
+        audioSource.Play();
+        
         Debug.Log("Four-Letters game button was clicked.");
     }
 
     public void WordHunt()
     {
+        audioSource.clip = clickSound;
+        audioSource.Play();
+        
         Debug.Log("Word-Hunt game button was clicked.");
     }
 }

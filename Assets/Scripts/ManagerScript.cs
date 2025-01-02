@@ -40,6 +40,13 @@ public class ManagerScript : MonoBehaviour
     private int solvedWords = 0;
     private Coroutine displayAnswerCoroutine; // Reference to the running DisplayAnswer coroutine
 
+    //Audio Referances
+    public AudioClip joinSound;
+    public AudioClip correctSound;
+    public AudioClip wrongSound;
+    public AudioClip levelCompleteSound;
+    public AudioSource audioSource;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -145,7 +152,7 @@ public class ManagerScript : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {   
             //If players starts inputing another answer before the previous answer is still being
-            //displayed this if condition removes the the previous answer.  
+            //displayed, this if condition removes the the previous answer.  
             if (displayAnswerCoroutine != null)
             {   
                 wordAttempt = "";
@@ -166,6 +173,7 @@ public class ManagerScript : MonoBehaviour
 
                 isDrawing = true;
                 connectedObjects.Add(targetObject);
+                PlayJoinSound();
 
                 //Change the targetObjects Color
                 ChangeSpriteColor(targetObject, highlightColor);
@@ -188,6 +196,7 @@ public class ManagerScript : MonoBehaviour
                 if (!connectedObjects.Contains(targetObject))
                 {
                     connectedObjects.Add(targetObject);
+                    PlayJoinSound();
 
                     //Change the targetObjects Color
                     ChangeSpriteColor(targetObject, highlightColor);
@@ -229,9 +238,10 @@ public class ManagerScript : MonoBehaviour
                 //Reduce Complexity.
                 if(wordsFound.Contains(wordAttempt))
                 {   
-                    popupText.color = Color.blue;
+                    popupText.color = Color.yellow;
                     ShowPlayerAnswer(wordAttempt, true);
                     ShowPopup("Already found!");
+                    PlayWrongSound();
                     
                     //Makes the wordGrid containing the inputted word shake. 
                     wordGrids[i].TriggerShake();
@@ -240,11 +250,21 @@ public class ManagerScript : MonoBehaviour
                 {
                     Debug.Log("Correct Answer.");
                     ShowPlayerAnswer(wordAttempt, true);
-                    popupText.color = Color.blue;
+                    popupText.color = Color.green;
                     ShowPopup("Correct!");
 
                     wordsFound.Add(wordAttempt);
                     ++solvedWords;
+
+                    //Checks if the player has found all required word for current level.
+                    if(wordsFound.Count == numberOfGuessWords)
+                    {
+                       PlayLevelCompleteSound(); 
+                    }   
+                    else
+                    {
+                       PlayCorrectSound(); 
+                    }
 
                     //Sets the letters from the discovered word to corrosponding Word Grid.
                     wordGrids[i].SetGridLetters(currentLetterList);
@@ -256,9 +276,10 @@ public class ManagerScript : MonoBehaviour
             //Reduce Complexity. 
             else if(levelDataScriptable.levels[currentLevel].bonusWords.Contains(wordAttempt))
             {
-                popupText.color = Color.blue;
+                popupText.color = Color.green;
                 ShowPlayerAnswer(wordAttempt, true);
                 ShowPopup("Bonus Word!");
+                PlayCorrectSound();
             }
 
             else
@@ -266,7 +287,8 @@ public class ManagerScript : MonoBehaviour
                 Debug.Log("Wrong Answer.");
                 ShowPlayerAnswer(wordAttempt, false);
                 popupText.color = Color.red;
-                ShowPopup("Wrong!");       
+                ShowPopup("Wrong!");
+                PlayWrongSound();       
             }
         }
 
@@ -298,7 +320,7 @@ public class ManagerScript : MonoBehaviour
     //Shows pop-up message to tell players if they are right/wrong.
     public void ShowPopup(string message)
     {
-        StartCoroutine(DisplayPopup(message, 1f));
+        StartCoroutine(DisplayPopup(message, 0.7f));
     }
 
     //Removes pop-up message after a given amount of time.
@@ -319,7 +341,7 @@ public class ManagerScript : MonoBehaviour
             StopCoroutine(displayAnswerCoroutine);
         }
         
-        displayAnswerCoroutine = StartCoroutine(DisplayAnswer(answer, correct, 0.5f));
+        displayAnswerCoroutine = StartCoroutine(DisplayAnswer(answer, correct, 0.7f));
     }
 
     //Removes the players given answer after a given amount of time.
@@ -343,13 +365,13 @@ public class ManagerScript : MonoBehaviour
                 wordAttemptText.GetComponent<Image>().color = wrongColor;
             }
         }
-
+        //Yello: #F5FF98
         wordAttemptText.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = wordAttempt;
 
         yield return new WaitForSeconds(duration);
 
         Color newColor;
-        if (ColorUtility.TryParseHtmlString("#F5FF98", out newColor))
+        if (ColorUtility.TryParseHtmlString("#8C8C8C", out newColor))
         {
             wordAttemptText.GetComponent<Image>().color = newColor;
         }
@@ -462,6 +484,35 @@ public class ManagerScript : MonoBehaviour
             originalColors.Remove(targetObject);
         }
     }
+
+    //Playes soundFX when player selects/joins a letter button. 
+    private void PlayJoinSound()
+    {
+        audioSource.clip = joinSound;
+        audioSource.Play();
+    }
+
+    //Playes soundFX when player gets a correct word. 
+    private void PlayCorrectSound()
+    {
+        audioSource.clip = correctSound;
+        audioSource.Play();
+    }
+
+    //Playes soundFX when player gives an incorrect word. 
+    private void PlayWrongSound()
+    {
+        audioSource.clip = wrongSound;
+        audioSource.Play();
+    }
+
+    //Playes soundFX when player completes a level. 
+    private void PlayLevelCompleteSound()
+    {
+        audioSource.clip = levelCompleteSound;
+        audioSource.Play();
+    }
+
 }
 
 [System.Serializable]
